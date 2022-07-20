@@ -8,6 +8,7 @@ import time
 import random
 import asyncio
 import time
+from operator import length_hint
 
 bot = commands.Bot(command_prefix='_', help_command=None, intents=discord.Intents.all())
 
@@ -54,7 +55,7 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
             if channel.permissions_for(henry).read_messages:
                 print(f"henry is allowed")
                 async for message in channel.history(limit=arg):
-                    if message.author == henry and len(message.content) > 0 and message.content.count(" ") > 0:
+                    if message.author == henry and len(message.content) > 0 and (message.content.count(" ") > 0 or message.content.count("/") > 0):
                         i += 1
                         print(f"message {i} added")
                         henry_messages.append(message.content)
@@ -72,7 +73,7 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
         
         print("3")
         
-        await ctx.send(embed=str_to_embed("Henry has been reloaded."))
+        await ctx.send(embed=str_to_embed(f"Henry has been reloaded with {i} messages."))
 
 @bot.command()
 async def updatehenry(ctx: commands.Context):
@@ -104,14 +105,19 @@ async def updatehenry(ctx: commands.Context):
 
 @bot.command()
 async def askhenry(ctx: commands.Context, *args):
-    henry = bot.get_user(HENRY_ID)
-    if len(henry_messages) > 0:
-        message = discord.Embed(description=random.choice(henry_messages))
-        message.set_author(name="Henry says:", icon_url=henry.avatar.url)
+    async with ctx.typing():
+        henry = bot.get_user(HENRY_ID)
+        if len(henry_messages) > 0:
+            print("Henry has messages")
 
-        await ctx.send(embed=message)
-    else:
-        await ctx.send(embed=str_to_embed("There are no saved messages from henry."))
+            message = discord.Embed(description=random.choice(henry_messages))
+            message.set_author(name="Henry says:", icon_url=henry.avatar.url)
+
+            print("random message selected")
+
+            await ctx.send(embed=message)
+        else:
+            await ctx.send(embed=str_to_embed("There are no saved messages from henry."))
 
 # renames a user using the power of a voting majority
 @bot.command()
@@ -152,6 +158,7 @@ async def on_ready():
     # load and save json of guild preferences, including vote pass/fail requirements
     global server_settings
     global henry_messages
+    global henry_time
     server_settings = readjson(SERVER_SETTINGS_PATH)
 
     with open(SERVER_SETTINGS_PATH, 'w', encoding='utf-8') as file:
@@ -165,7 +172,7 @@ async def on_ready():
 
         json.dump(server_settings, file, indent = 4)
 
-    henry_messages = await load_henry_from_file(HENRY_PATH, bot)
+    henry_messages, henry_time = await load_henry_from_file(HENRY_PATH, bot)
 
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for _help"))
