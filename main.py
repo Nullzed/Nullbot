@@ -3,10 +3,8 @@ from discord.ext import commands
 import json
 from helper import *
 from config import *
-import typing
 import time
 import random
-import asyncio
 import time
 from operator import length_hint
 
@@ -141,11 +139,12 @@ async def close(ctx: commands.Context):
 # help command
 @bot.command()
 async def help(ctx: commands.Context):
-    async with ctx.typing():
-        mesEmb = discord.Embed(description=HELP, color = DEF_COLOR)
-        mesEmb.set_author(icon_url = str(bot.user.avatar_url), name = "Nullbot commands overview")
+    print("help called")
 
-        await ctx.send(embed = mesEmb)
+    mesEmb = discord.Embed(description=HELP, color = DEF_COLOR)
+    mesEmb.set_author(icon_url = str(bot.user.avatar.url), name = "Nullbot commands overview")
+
+    await ctx.send(embed = mesEmb)
 
 @bot.command()
 async def showvoterequirements(ctx: commands.Context):
@@ -248,6 +247,5 @@ async def on_command_error(ctx: commands.Context, error):
         await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}rename @[member] [new name]`, without the braces.".format(bot.command_prefix)))
     elif ctx.command.name == "setvoterequirements":
         await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}setvoterequirements [integer]`, without the braces.".format(bot.command_prefix)))
-
 
 bot.run(TOKEN)
