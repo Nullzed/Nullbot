@@ -24,6 +24,9 @@ HELP = """
 
 `_setvoterequirements [number]`:
 *Allows a user with manage server perms to change how many votes are required to pass/fail a poll.*
+
+`_askhenry [question]`:
+*Ask our great oracle, Henry, for an answer to any of your burning questions.*
 """
 
 TOKEN = bot_token.REAL_TOKEN
