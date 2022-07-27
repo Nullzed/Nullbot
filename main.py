@@ -11,17 +11,18 @@ import typing
 
 bot = commands.Bot(command_prefix='_', help_command=None, intents=discord.Intents.all())
 
-discord.Intents.reactions = True
-discord.Intents.guilds = True
+discord.Intents.reactions   = True
+discord.Intents.guilds      = True
 
-waiting_message_cache = []
-id_user_dict = {}
-server_settings = {} 
-henry_messages = []
-henry_time = 0.0
-drexel_messages_owners = {}
-drexel_messages_all = {}
-drexel_last_update = 0.0
+waiting_message_cache   = []
+id_user_dict            = {}
+server_settings         = {} 
+henry_messages          = []
+henry_time              = 0.0
+drexel_messages_owners  = {}
+drexel_messages_all     = {}
+drexel_messages_channel = {}
+drexel_last_update      = 0.0
 
 
 # Sets how many votes the bot should look for before closing a vote.
@@ -48,7 +49,7 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
 
     global henry_messages
     global henry_time
-    guild: discord.Guild = bot.get_guild(HENRY_GUILD_ID)
+    guild: discord.Guild  = bot.get_guild(HENRY_GUILD_ID)
     henry: discord.Member = guild.get_member(HENRY_ID)
     henry_messages = []
 
@@ -75,17 +76,17 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
         print("2")
         
         with open(HENRY_PATH, 'w') as file:
-            json.dump(henry_messages, file)
+            json.dump(henry_messages, file, indent=4)
 
         curtime = time.time()
         henry_time = curtime
         with open(HENRY_TIME_PATH, 'w') as file:
             datetimedict = {'time updated': curtime}
-            json.dump(datetimedict, file)
+            json.dump(datetimedict, file, indent=4)
         
         print("3")
 
-        timeend = time.time()
+        timeend    = time.time()
         timedeltas = timeend - timestart
         timedeltam = timedeltas / 60
         
@@ -97,13 +98,15 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
 async def fullupdatedrexel(ctx: commands.Context, arg: int):
 
     print("fullupdatedrexel called")
+
     global drexel_messages_owners
     global drexel_messages_all
-    drexel_messages_owners = {}
-    drexel_messages_all = {}
-    guild: discord.Guild = bot.get_guild(DREXEL_GUILD_ID)
+    global drexel_messages_channel
 
-    timestart = time.time()
+    drexel_messages_owners  = {}
+    drexel_messages_all     = {}
+    guild: discord.Guild    = bot.get_guild(DREXEL_GUILD_ID)
+    timestart               = time.time()
 
     async with ctx.typing():
         i = 0
@@ -114,13 +117,19 @@ async def fullupdatedrexel(ctx: commands.Context, arg: int):
                     if len(message.content) > 0:
                         i += 1
 
-                        member = message.author
-                        memberid = str(member.id)
+                        member      = message.author
+                        memberid    = str(member.id)
+                        channelid   = str(message.channel.id)
                         
                         if memberid in drexel_messages_owners.keys():
                             drexel_messages_owners[memberid].append(message.content)
                         else:
                             drexel_messages_owners[memberid] = [message.content]
+
+                        if channelid in drexel_messages_channel.keys():
+                            drexel_messages_channel[channelid][message.content] = memberid
+                        else:
+                            drexel_messages_channel[channelid] = {message.content: memberid}
                         
                         drexel_messages_all[message.content] = memberid
                         
@@ -130,7 +139,9 @@ async def fullupdatedrexel(ctx: commands.Context, arg: int):
         with open(DREXEL_OWNERS_PATH, 'w') as file:
             json.dump(drexel_messages_owners, file, indent=4)
         with open(DREXEL_ALL_PATH, 'w') as file:
-            json.dump(drexel_messages_all, file)
+            json.dump(drexel_messages_all, file, indent=4)
+        with open(DREXEL_CHANNEL_PATH, 'w') as file:
+            json.dump(drexel_messages_channel, file, indent=4)
         print("messages saved")
 
         curtime = time.time()
@@ -138,7 +149,7 @@ async def fullupdatedrexel(ctx: commands.Context, arg: int):
             json.dump({'time updated': curtime}, file)
         print("time saved")
 
-        timeend = time.time()
+        timeend    = time.time()
         timedeltas = timeend - timestart
         timedeltam = timedeltas / 60
         
@@ -151,7 +162,7 @@ async def updatehenry(ctx: commands.Context):
 
     global henry_messages
     global henry_time
-    guild: discord.Guild = bot.get_guild(config.HENRY_GUILD_ID)
+    guild: discord.Guild  = bot.get_guild(config.HENRY_GUILD_ID)
     henry: discord.Member = guild.get_member(HENRY_ID)
 
     timestart = time.time()
@@ -174,7 +185,7 @@ async def updatehenry(ctx: commands.Context):
         datetimedict = {'time updated': curtime}
         json.dump(datetimedict, file)
 
-    timeend = time.time()
+    timeend    = time.time()
     timedeltas = timeend - timestart
     timedeltam = timedeltas / 60
 
@@ -182,7 +193,66 @@ async def updatehenry(ctx: commands.Context):
     
 
 @bot.command()
+@commands.check(is_owner)
+async def updatedrexel(ctx: commands.Context):
+
+    global drexel_messages_owners
+    global drexel_messages_all
+    global drexel_messages_channel
+    global drexel_last_update
+    
+    guild: discord.Guild            = bot.get_guild(DREXEL_GUILD_ID)
+    timestart                       = time.time()
+    drexelLastDT: datetime.datetime = datetime.datetime.fromtimestamp(drexel_last_update)
+
+    async with ctx.typing():
+        i = 0
+        for channel in guild.channels:
+            if channel.name not in DREXEL_IGNORED_CHANNELS and channel.name in DREXEL_APPROVED_CHANNELS:
+                async for message in channel.history(after=drexelLastDT):
+                    i += 1
+
+                    member      = message.author
+                    memberid    = str(member.id)
+                    channelid   = str(message.channel.id)
+                    
+                    if memberid in drexel_messages_owners.keys():
+                        drexel_messages_owners[memberid].append(message.content)
+                    else:
+                        drexel_messages_owners[memberid] = [message.content]
+
+                    if channelid in drexel_messages_channel.keys():
+                        drexel_messages_channel[channelid][message.content] = memberid
+                    else:
+                        drexel_messages_channel[channelid] = {message.content: memberid}
+                    
+                    drexel_messages_all[message.content] = memberid
+                    
+                    print(f"message {i} added")
+
+        print("messages scraped")
+        with open(DREXEL_OWNERS_PATH, 'w') as file:
+            json.dump(drexel_messages_owners, file, indent=4)
+        with open(DREXEL_ALL_PATH, 'w') as file:
+            json.dump(drexel_messages_all, file, indent=4)
+        print("messages saved")
+
+        curtime = time.time()
+        with open(DREXEL_TIME_PATH, 'w') as file:
+            json.dump({'time updated': curtime}, file)
+        print("time saved")
+
+        timeend    = time.time()
+        timedeltas = timeend - timestart
+        timedeltam = timedeltas / 60
+        
+        await ctx.send(embed=str_to_embed(f"Drexel has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {timedeltam:.2f} minutes, and loaded {i} messages."))
+
+
+@bot.command()
 async def askhenry(ctx: commands.Context, *args):
+
+    print("askhenry called")
 
     async with ctx.typing():
         henry = bot.get_user(HENRY_ID)
@@ -200,31 +270,46 @@ async def askhenry(ctx: commands.Context, *args):
 
 
 @bot.command()
-async def askdrexel(ctx: commands.Context, member: typing.Optional[discord.Member] = None, *args):
+async def askdrexel(ctx: commands.Context, member: typing.Optional[discord.Member] = None, channel: typing.Optional[discord.TextChannel] = None):
 
     print("askdrexel called")
+    name = ""
+    message = ""
+    if member:
+        print("member found")
 
-    if ctx.guild.id == DREXEL_GUILD_ID:
-        message = ""
-        if member:
-            print("member found")
-            id = str(member.id)
-            memberMessages = drexel_messages_owners[id]
+        id              = str(member.id)
+        memberMessages  = drexel_messages_owners[id]
+        message         = random.choice(memberMessages)
 
-            message = random.choice(memberMessages)
-        else:
-            print("member not found")
-            message = random.choice(list(drexel_messages_all.keys()))
-            print(message)
-            member: discord.Member = bot.get_guild(DREXEL_GUILD_ID).get_member(int(drexel_messages_all[message]))
-            print(member.nick)
+        name = f"{member.nick} says:"
+    elif channel:
+        print("channel found")
 
-        message = discord.Embed(description=message)
-        message.set_author(name=f"{member.nick} says:", icon_url=member.avatar.url)
+        id                      = str(channel.id)
+        channelMessages: dict   = drexel_messages_channel[id]
+        message                 = random.choice(list(channelMessages.keys()))
+        member: discord.Member  = ctx.guild.get_member(int(drexel_messages_channel[id][message]))
 
-        await ctx.send(embed=message)
+        print(channel)
+        print(message)
+
+        name = f"{member.nick} in {channel.name} says:"
     else:
-        await ctx.send(embed=str_to_embed("You don't go to drexel!"))
+        print("member or channel not found")
+
+        message                 = random.choice(list(drexel_messages_all.keys()))
+        member: discord.Member  = bot.get_guild(DREXEL_GUILD_ID).get_member(int(drexel_messages_all[message]))
+        
+        print(message)
+        print(member.nick)
+
+        name = f"{member.nick} says:"
+
+    message = discord.Embed(description=message)
+    message.set_author(name=name, icon_url=member.avatar.url)
+
+    await ctx.send(embed=message)
 
 
 # renames a user using the power of a voting majority
@@ -280,12 +365,14 @@ async def on_ready():
     global drexel_messages_all
     global drexel_messages_owners
     global drexel_last_update
+    global drexel_messages_channel
 
-    henry_messages, henry_time = await load_henry_from_file(HENRY_PATH, bot)
-    drexel_messages_all = readjsondict(DREXEL_ALL_PATH)
-    drexel_messages_owners = readjsondict(DREXEL_OWNERS_PATH)
+    henry_messages, henry_time  = await load_henry_from_file(HENRY_PATH, bot)
+    drexel_messages_all         = readjsondict(DREXEL_ALL_PATH)
+    drexel_messages_owners      = readjsondict(DREXEL_OWNERS_PATH)
+    server_settings             = readjsondict(SERVER_SETTINGS_PATH)
+    drexel_messages_channel     = readjsondict(DREXEL_CHANNEL_PATH)
     if readjsondict(DREXEL_TIME_PATH): drexel_last_update = float(readjsondict(DREXEL_TIME_PATH)['time updated'])
-    server_settings = readjsondict(SERVER_SETTINGS_PATH)
 
     with open(SERVER_SETTINGS_PATH, 'w', encoding='utf-8') as file:
         botguilds: list[discord.Guild] = bot.guilds
@@ -313,10 +400,10 @@ async def on_reaction_add(reaction: discord.Reaction, emoji: discord.Emoji):
 
         sVoteReq: int = server_settings[str(message.guild.id)]['Vote Requirements']
 
-        vars = id_user_dict[message.id]
-        member: discord.Member = vars[0]
-        newName = vars[1]
-        requester: discord.Member = vars[2]
+        vars                        = id_user_dict[message.id]
+        member: discord.Member      = vars[0]
+        newName                     = vars[1]
+        requester: discord.Member   = vars[2]
 
         # if thumbs up greater than thumbs down by 3 members
         if reactions[0].count >= reactions[1].count + sVoteReq:
@@ -371,9 +458,9 @@ async def on_reaction_add(reaction: discord.Reaction, emoji: discord.Emoji):
 @bot.listen()
 async def on_command_error(ctx: commands.Context, error):
 
-    if ctx.command.name == "rename":
+    if ctx.command.name     == "rename":
         await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}rename @[member] [new name]`, without the braces.".format(bot.command_prefix)))
-    elif ctx.command.name == "setvoterequirements":
+    elif ctx.command.name   == "setvoterequirements":
         await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}setvoterequirements [integer]`, without the braces.".format(bot.command_prefix)))
 
 
