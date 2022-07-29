@@ -31,8 +31,8 @@ DREXEL_APPROVED_CHANNELS    = [ 'general',
                                 'portmanteaus', 
                                 'vc-chat' ]
 
-script_path             = os.path.normpath(__file__) # i.e. /path/to/dir/foobar.py
-script_dir              = os.path.split(script_path)[0] #i.e. /path/to/dir/
+script_path             = os.path.normpath(__file__)
+script_dir              = os.path.split(script_path)[0]
 script_dir              = os.path.join(script_dir, 'data')
 SERVER_SETTINGS_PATH    = os.path.join(script_dir, 'server_settings.json')
 

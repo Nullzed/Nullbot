@@ -7,6 +7,7 @@ import time
 import random
 import time
 import typing
+import datetime
 
 
 bot = commands.Bot(command_prefix='_', help_command=None, intents=discord.Intents.all())
@@ -14,15 +15,15 @@ bot = commands.Bot(command_prefix='_', help_command=None, intents=discord.Intent
 discord.Intents.reactions   = True
 discord.Intents.guilds      = True
 
-waiting_message_cache   = []
-id_user_dict            = {}
-server_settings         = {} 
-henry_messages          = []
-henry_time              = 0.0
-drexel_messages_owners  = {}
-drexel_messages_all     = {}
-drexel_messages_channel = {}
-drexel_last_update      = 0.0
+waiting_message_cache   = [] # voting messages being waited one
+id_user_dict            = {} # rename voting messages
+server_settings         = {} # voting settings for each server
+henry_messages          = [] # messages henry has sent
+henry_time              = 0.0 # last time since henry was updated
+drexel_messages_all     = {} # all the drexel messages
+drexel_messages_owners  = {} # all the drexel messages sorted by owner
+drexel_messages_channel = {} # all the drexel messages sorted by channel
+drexel_last_update      = 0.0 #last time since drexel was updated
 
 
 # Sets how many votes the bot should look for before closing a vote.
@@ -49,13 +50,11 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
 
     global henry_messages
     global henry_time
-    guild: discord.Guild  = bot.get_guild(HENRY_GUILD_ID)
-    henry: discord.Member = guild.get_member(HENRY_ID)
-    henry_messages = []
 
-    print("1")
-
-    timestart = time.time()
+    guild: discord.Guild    = bot.get_guild(HENRY_GUILD_ID)
+    henry: discord.Member   = guild.get_member(HENRY_ID)
+    henry_messages          = []
+    timestart               = time.time()
 
     async with ctx.typing():
         i = 0
@@ -72,25 +71,21 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
                         print(f"message {i} added")
 
                         henry_messages.append(message.content)
-    
-        print("2")
         
         with open(HENRY_PATH, 'w') as file:
             json.dump(henry_messages, file, indent=4)
 
-        curtime = time.time()
-        henry_time = curtime
+        curtime     = time.time()
+        henry_time  = curtime
         with open(HENRY_TIME_PATH, 'w') as file:
             datetimedict = {'time updated': curtime}
             json.dump(datetimedict, file, indent=4)
-        
-        print("3")
 
         timeend    = time.time()
         timedeltas = timeend - timestart
         timedeltam = timedeltas / 60
         
-        await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or about {timedeltam:.4f} minutes and loaded {len(henry_messages)} messages."))
+        await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or about {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {len(henry_messages)} messages."))
 
 
 @bot.command()
@@ -151,9 +146,9 @@ async def fullupdatedrexel(ctx: commands.Context, arg: int):
 
         timeend    = time.time()
         timedeltas = timeend - timestart
-        timedeltam = timedeltas / 60
+        timedeltam = timedeltas // 60
         
-        await ctx.send(embed=str_to_embed(f"Drexel has been updated, which took about {int(timedeltas)} seconds or {timedeltam:.2f} minutes, and loaded {i} messages."))
+        await ctx.send(embed=str_to_embed(f"Drexel has been updated, which took about {int(timedeltas)} seconds or {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {i} messages."))
 
 
 @bot.command()
@@ -162,10 +157,10 @@ async def updatehenry(ctx: commands.Context):
 
     global henry_messages
     global henry_time
-    guild: discord.Guild  = bot.get_guild(config.HENRY_GUILD_ID)
-    henry: discord.Member = guild.get_member(HENRY_ID)
 
-    timestart = time.time()
+    guild: discord.Guild    = bot.get_guild(config.HENRY_GUILD_ID)
+    henry: discord.Member   = guild.get_member(HENRY_ID)
+    timestart               = time.time()
 
     async with ctx.typing():
         i = 0
@@ -179,8 +174,8 @@ async def updatehenry(ctx: commands.Context):
                         print(f"message {i} added")
                         henry_messages.append(message.content)
         
-    curtime = time.time()
-    henry_time = curtime
+    curtime     = time.time()
+    henry_time  = curtime
     with open(HENRY_TIME_PATH, 'w') as file:
         datetimedict = {'time updated': curtime}
         json.dump(datetimedict, file)
@@ -189,7 +184,7 @@ async def updatehenry(ctx: commands.Context):
     timedeltas = timeend - timestart
     timedeltam = timedeltas / 60
 
-    await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or about {timedeltam:.4f} minutes and loaded {len(henry_messages)} messages."))
+    await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or about {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {i} new messages."))
     
 
 @bot.command()
@@ -224,7 +219,7 @@ async def updatedrexel(ctx: commands.Context):
                     if channelid in drexel_messages_channel.keys():
                         drexel_messages_channel[channelid][message.content] = memberid
                     else:
-                        drexel_messages_channel[channelid] = {message.content: memberid}
+                        drexel_messages_channel[channelid] = {message.content: memberid}                
                     
                     drexel_messages_all[message.content] = memberid
                     
@@ -235,6 +230,8 @@ async def updatedrexel(ctx: commands.Context):
             json.dump(drexel_messages_owners, file, indent=4)
         with open(DREXEL_ALL_PATH, 'w') as file:
             json.dump(drexel_messages_all, file, indent=4)
+        with open(DREXEL_CHANNEL_PATH, 'w') as file:
+            json.dump(drexel_messages_channel, file, indent=4)
         print("messages saved")
 
         curtime = time.time()
@@ -246,7 +243,7 @@ async def updatedrexel(ctx: commands.Context):
         timedeltas = timeend - timestart
         timedeltam = timedeltas / 60
         
-        await ctx.send(embed=str_to_embed(f"Drexel has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {timedeltam:.2f} minutes, and loaded {i} messages."))
+        await ctx.send(embed=str_to_embed(f"Drexel has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {i} new messages."))
 
 
 @bot.command()
@@ -273,7 +270,7 @@ async def askhenry(ctx: commands.Context, *args):
 async def askdrexel(ctx: commands.Context, member: typing.Optional[discord.Member] = None, channel: typing.Optional[discord.TextChannel] = None):
 
     print("askdrexel called")
-    name = ""
+    name    = ""
     message = ""
     if member:
         print("member found")
@@ -294,7 +291,7 @@ async def askdrexel(ctx: commands.Context, member: typing.Optional[discord.Membe
         print(channel)
         print(message)
 
-        name = f"{member.nick} in {channel.name} says:"
+        name = f"{member.nick} in #{channel.name} says:"
     else:
         print("member or channel not found")
 
@@ -367,7 +364,7 @@ async def on_ready():
     global drexel_last_update
     global drexel_messages_channel
 
-    henry_messages, henry_time  = await load_henry_from_file(HENRY_PATH, bot)
+    henry_messages, henry_time  = load_henry_from_file(HENRY_PATH)
     drexel_messages_all         = readjsondict(DREXEL_ALL_PATH)
     drexel_messages_owners      = readjsondict(DREXEL_OWNERS_PATH)
     server_settings             = readjsondict(SERVER_SETTINGS_PATH)
@@ -413,8 +410,9 @@ async def on_reaction_add(reaction: discord.Reaction, emoji: discord.Emoji):
             users = make_user_list(users)
 
             # delete the original bot's message
-            channel: discord.TextChannel = message.channel
-            id = message.id
+            channel: discord.TextChannel    = message.channel
+            id                              = message.id
+
             await message.delete()
 
             async with channel.typing():
@@ -441,7 +439,7 @@ async def on_reaction_add(reaction: discord.Reaction, emoji: discord.Emoji):
             
             # delete the original bot message
             channel = message.channel
-            id = message.id
+            id      = message.id
             await message.delete()
 
             async with channel.typing():

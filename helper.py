@@ -1,9 +1,6 @@
 import discord
 import json
 import config
-import random
-from discord.ext import commands
-import datetime
 
 
 def str_to_embed(input: str, incolor = config.DEF_COLOR) -> discord.Embed:
@@ -14,7 +11,6 @@ def str_to_embed(input: str, incolor = config.DEF_COLOR) -> discord.Embed:
 def make_user_list(users: list[discord.Member]) -> str:
 
     output = ""
-    
     if len(users) > 1:
         for i in range(len(users)):
             if not(i >= len(users) - 1):
@@ -43,11 +39,10 @@ def readjsondict(path) -> dict:
         return {}
 
 
-# TODO: load henry's messages from a file
-async def load_henry_from_file(path, bot: commands.Bot):
+# load henry's messages from a file
+def load_henry_from_file(path):
 
     henrylist = []
-
     try:
         with open(path, 'r') as file:      
                 henrylist = json.load(file)
