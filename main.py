@@ -46,12 +46,12 @@ async def on_ready():
     testchannel = bot.get_guild(TEST_GUILD_ID).get_channel(TEST_CHANNEL_ID)
 
     try: 
-        await bot.load_extension('queries')
+        await bot.load_extension('cogs.queries')
         await testchannel.send(embed = str_to_embed(f"Nullbot has initialized queries cog on <t:{int(time.time())}>"))
     except Exception as e: await testchannel.send(embed=str_to_embed(f"{e} error has occured."))
 
     try:
-        await bot.load_extension('interactions')
+        await bot.load_extension('cogs.interactions')
         await bot.get_guild(TEST_GUILD_ID).get_channel(TEST_CHANNEL_ID).send(embed = str_to_embed(f"Nullbot has initialized interactions cog on <t:{int(time.time())}>"))
     except Exception as e: await testchannel.send(embed=str_to_embed(f"{e} error has occured."))
 
@@ -65,7 +65,7 @@ async def on_ready():
 @commands.check(is_owner)
 async def reload(ctx: commands.Context, arg: str):
     try: 
-        await bot.reload_extension(arg)
+        await bot.reload_extension(f"cogs.{arg}")
         await ctx.send(embed=str_to_embed(f"Successfully reloaded extension `{arg}` on <t:{int(time.time())}>"))
     except Exception as e: await ctx.send(embed=str_to_embed(f"{e} error has occured."))
 
