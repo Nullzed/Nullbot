@@ -33,7 +33,7 @@ async def setvoterequirements(ctx: commands.Context, arg: int):
     if ctx.author.guild_permissions.manage_guild == True:
         # set server vote pass/fail requirement numbers.
         with open(SERVER_SETTINGS_PATH, 'w') as file:
-            if arg < 1: arg = 1
+            # if arg < 1: arg = 1
 
             global server_settings
 
@@ -315,13 +315,13 @@ async def askdrexel(ctx: commands.Context, member: typing.Optional[discord.Membe
 @bot.command()
 async def rename(ctx: commands.Context, member: discord.Member, *args):
 
-    name = ' '.join(args)
-    message: discord.Message = await ctx.send(embed = str_to_embed(f"Rename {member.mention} to `{name}`?"))
+    name                        = ' '.join(args)
+    message: discord.Message    = await ctx.send(embed = str_to_embed(f"Rename {member.mention} to `{name}`?"))
+    id_user_dict[message.id]    = [member, name, ctx.author]
+    waiting_message_cache.append(message.id)    
+
     await message.add_reaction('👍')
     await message.add_reaction('👎')
-
-    waiting_message_cache.append(message.id)
-    id_user_dict[message.id] = [member, name, ctx.author]
 
 
 # turns off the bot
@@ -394,20 +394,32 @@ async def on_reaction_add(reaction: discord.Reaction, emoji: discord.Emoji):
     message: discord.Message = reaction.message
 
     # if we're waiting on the message for a vote then calculate
-    if message.id in waiting_message_cache:
-        reactions = message.reactions
+    if message.id in waiting_message_cache and reaction.count > 1:
 
-        sVoteReq: int = server_settings[str(message.guild.id)]['Vote Requirements']
+        print("Reaction registered")
 
+        reactions       = message.reactions
+        reactionup      = None
+        reactiondown    = None
+
+        for reaction in reactions:
+            if   str(reaction) == '👍': reactionup = reaction
+            elif str(reaction) == '👎': reactiondown = reaction
+
+        print(reactions)
+        print(reactionup)
+        print(reactiondown)
+
+        sVoteReq: int               = server_settings[str(message.guild.id)]['Vote Requirements']
         vars                        = id_user_dict[message.id]
         member: discord.Member      = vars[0]
         newName                     = vars[1]
         requester: discord.Member   = vars[2]
 
         # if thumbs up greater than thumbs down by 3 members
-        if reactions[0].count >= reactions[1].count + sVoteReq:
+        if reactionup.count - reactiondown.count == sVoteReq:
 
-            users = [user async for user in reactions[0].users()]
+            users = [user async for user in reactionup.users()] if reactionup.count > reactiondown.count else [user async for user in reactiondown.users()]
             users = remove_nullbot(users)
             users = make_user_list(users)
 
@@ -433,10 +445,10 @@ async def on_reaction_add(reaction: discord.Reaction, emoji: discord.Emoji):
             waiting_message_cache.remove(id)
             id_user_dict.pop(id)
 
-        elif reactions[0].count + sVoteReq <= reactions[1].count:
+        elif reactiondown.count - reactionup.count == sVoteReq:
 
-            users = [user async for user in reactions[1].users()]
-            users.pop(0)
+            users = [user async for user in reactionup.users()] if reactionup.count > reactiondown.count else [user async for user in reactiondown.users()]
+            users = remove_nullbot(users)
             users = make_user_list(users)
             
             # delete the original bot message
@@ -461,7 +473,7 @@ async def on_command_error(ctx: commands.Context, error):
     if ctx.command.name     == "rename":
         await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}rename @[member] [new name]`".format(bot.command_prefix)))
     elif ctx.command.name   == "setvoterequirements":
-        await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}setvoterequirements [integer > 0]`".format(bot.command_prefix)))
+        await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}setvoterequirements [integer]`".format(bot.command_prefix)))
 
 
 bot.run(TOKEN)

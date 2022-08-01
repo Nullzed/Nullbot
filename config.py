@@ -52,7 +52,7 @@ HELP = """
 `_rename @[user] [new name]`:
 *Allows a user to rename their friends using the power of community.*
 
-`_setvoterequirements [integer > 0]`:
+`_setvoterequirements [integer]`:
 *Allows a user with manage server perms to change how many votes are required to pass/fail a poll.*
 
 `_askhenry [question]`:
