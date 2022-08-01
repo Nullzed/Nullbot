@@ -55,9 +55,38 @@ HELP = """
 `_setvoterequirements [integer]`:
 *Allows a user with manage server perms to change how many votes are required to pass/fail a poll.*
 
+`_showvoterequirements`:
+*Shows the required amount of votes on this server.*
+
 `_askhenry [question]`:
-*Ask our great oracle, Henry, for an answer to any of your burning questions.*
+*Ask Henry his opinion on things.*
 
 `_askdrexel [*user or channel]`:
 *Ask the entire Drexel University MIP program what they think! Optionally, you can ping or name Drexel users, but please don't ping people too much. You can also specify a channel to pull from.*
+"""
+
+ADMINHELP = """
+`_adminhelp`:
+*Shows this message.*
+
+`_close`:
+*Closes the bot.*
+
+`_reload [string]`:
+*Reloads a specified extension.*
+
+`_showsettings`:
+*Prints the dictionary of server settings.*
+
+`_fullupdatehenry`:
+*Fully caches through the specified server to scrape henry's messages.*
+
+`_fullupdatedrexel`:
+*Fully caches and scrapes the drexel server's messages.*
+
+`_updatehenry`:
+*Updates henry's messages since the last timestamp.*
+
+`_updatedrexel`:
+*Updates drexel's messages since the last timestamp.*
 """
