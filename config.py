@@ -34,6 +34,7 @@ DREXEL_APPROVED_CHANNELS    = [ 'general',
 script_path             = os.path.normpath(__file__)
 script_dir              = os.path.split(script_path)[0]
 script_dir              = os.path.join(script_dir, 'data')
+
 SERVER_SETTINGS_PATH    = os.path.join(script_dir, 'server_settings.json')
 
 HENRY_PATH              = os.path.join(script_dir, 'henry_messages.json')
@@ -51,7 +52,7 @@ HELP = """
 `_rename @[user] [new name]`:
 *Allows a user to rename their friends using the power of community.*
 
-`_setvoterequirements [number]`:
+`_setvoterequirements [integer > 0]`:
 *Allows a user with manage server perms to change how many votes are required to pass/fail a poll.*
 
 `_askhenry [question]`:

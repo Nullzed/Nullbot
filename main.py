@@ -33,6 +33,8 @@ async def setvoterequirements(ctx: commands.Context, arg: int):
     if ctx.author.guild_permissions.manage_guild == True:
         # set server vote pass/fail requirement numbers.
         with open(SERVER_SETTINGS_PATH, 'w') as file:
+            if arg < 1: arg = 1
+
             global server_settings
 
             server_settings[str(ctx.guild.id)]['Vote Requirements'] = arg
@@ -85,7 +87,7 @@ async def fullupdatehenry(ctx: commands.Context, arg: int):
         timedeltas = timeend - timestart
         timedeltam = timedeltas / 60
         
-        await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or about {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {len(henry_messages)} messages."))
+        await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or about {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {len(henry_messages)} messages."))
 
 
 @bot.command()
@@ -148,7 +150,7 @@ async def fullupdatedrexel(ctx: commands.Context, arg: int):
         timedeltas = timeend - timestart
         timedeltam = timedeltas // 60
         
-        await ctx.send(embed=str_to_embed(f"Drexel has been updated, which took about {int(timedeltas)} seconds or {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {i} messages."))
+        await ctx.send(embed=str_to_embed(f"Drexel has been updated, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} messages."))
 
 
 @bot.command()
@@ -184,7 +186,7 @@ async def updatehenry(ctx: commands.Context):
     timedeltas = timeend - timestart
     timedeltam = timedeltas / 60
 
-    await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or about {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {i} new messages."))
+    await ctx.send(embed=str_to_embed(f"Henry has been updated, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} new messages."))
     
 
 @bot.command()
@@ -243,7 +245,7 @@ async def updatedrexel(ctx: commands.Context):
         timedeltas = timeend - timestart
         timedeltam = timedeltas / 60
         
-        await ctx.send(embed=str_to_embed(f"Drexel has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {timedeltam}:{timedeltas - (timedeltam * 60)} minutes, and loaded {i} new messages."))
+        await ctx.send(embed=str_to_embed(f"Drexel has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} new messages."))
 
 
 @bot.command()
@@ -383,7 +385,7 @@ async def on_ready():
         json.dump(server_settings, file, indent = 4)
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for _help"))
-    await bot.get_guild(TEST_GUILD_ID).get_channel(TEST_CHANNEL_ID).send(embed = str_to_embed("Bot is ready!"))
+    await bot.get_guild(TEST_GUILD_ID).get_channel(TEST_CHANNEL_ID).send(embed = str_to_embed(f"Nullbot has initialized on <t:{int(time.time())}>"))
 
 
 @bot.listen()
@@ -457,9 +459,9 @@ async def on_reaction_add(reaction: discord.Reaction, emoji: discord.Emoji):
 async def on_command_error(ctx: commands.Context, error):
 
     if ctx.command.name     == "rename":
-        await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}rename @[member] [new name]`, without the braces.".format(bot.command_prefix)))
+        await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}rename @[member] [new name]`".format(bot.command_prefix)))
     elif ctx.command.name   == "setvoterequirements":
-        await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}setvoterequirements [integer]`, without the braces.".format(bot.command_prefix)))
+        await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}setvoterequirements [integer > 0]`".format(bot.command_prefix)))
 
 
 bot.run(TOKEN)
