@@ -17,6 +17,7 @@ DREXEL_IGNORED_CHANNELS     = [ 'bots',
                                 'hombies',
                                 'wordle-games' ]
 
+"""
 DREXEL_APPROVED_CHANNELS    = [ 'general', 
                                 'media', 
                                 'paparazzi-sightings', 
@@ -31,6 +32,7 @@ DREXEL_APPROVED_CHANNELS    = [ 'general',
                                 'anagrams', 
                                 'portmanteaus', 
                                 'vc-chat' ]
+"""
 
 UW_IGNORED_CHANNELS         = [ 'groovy-graveyard',
                                 'schkloom-squad2therevival' ]
@@ -73,7 +75,7 @@ HELP = """
 `_askdrexel [*user or channel]`:
 *Ask the entire Drexel University MIP program what they think! Optionally, you can ping or name Drexel users, but please don't ping people too much. You can also specify a channel to pull from.*
 
-_askuw [*user or channel]`:
+`_askuw [*user or channel]`:
 *Ask people from washington about life. Optionally, you can ping or name users, but please don't ping people too much. You can also specify a channel to pull from.*
 """
 

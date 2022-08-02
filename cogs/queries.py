@@ -87,7 +87,7 @@ class Queries(commands.Cog):
             i = 0
 
             for channel in guild.text_channels:
-                if channel.name not in DREXEL_IGNORED_CHANNELS and channel.name in DREXEL_APPROVED_CHANNELS:
+                if channel.name not in DREXEL_IGNORED_CHANNELS and isinstance(channel, discord.TextChannel):
                     async for message in channel.history(limit=arg):
                         if len(message.content) > 0:
                             i += 1
@@ -146,7 +146,7 @@ class Queries(commands.Cog):
             i = 0
 
             for channel in guild.text_channels:
-                if channel.name not in UW_IGNORED_CHANNELS:
+                if channel.name not in UW_IGNORED_CHANNELS and isinstance(channel, discord.TextChannel):
                     async for message in channel.history(limit=arg):
                         if len(message.content) > 0:
                             i += 1
@@ -202,7 +202,7 @@ class Queries(commands.Cog):
             i = 0
             for channel in guild.text_channels:
                 print(f"Channel is {channel.name}")
-                if channel.permissions_for(henry).read_messages and channel.name != "bot-commands":
+                if channel.permissions_for(henry).read_messages and channel.name != "bot-commands" and isinstance(channel, discord.TextChannel):
                     print(f"henry is allowed")
                     async for message in channel.history(after=datetime.datetime.fromtimestamp(self.henry_time)):
                         if message.author == henry and len(message.content) > 0:
@@ -234,27 +234,28 @@ class Queries(commands.Cog):
         async with ctx.typing():
             i = 0
             for channel in guild.channels:
-                if channel.name not in DREXEL_IGNORED_CHANNELS and channel.name in DREXEL_APPROVED_CHANNELS:
+                if channel.name not in DREXEL_IGNORED_CHANNELS and isinstance(channel, discord.TextChannel):
                     async for message in channel.history(after=drexelLastDT):
-                        i += 1
+                        if len(message.content) > 0:
+                            i += 1
 
-                        member      = message.author
-                        memberid    = str(member.id)
-                        channelid   = str(message.channel.id)
-                        
-                        if memberid in self.drexel_messages_owners.keys():
-                            self.drexel_messages_owners[memberid].append(message.content)
-                        else:
-                            self.drexel_messages_owners[memberid] = [message.content]
+                            member      = message.author
+                            memberid    = str(member.id)
+                            channelid   = str(message.channel.id)
+                            
+                            if memberid in self.drexel_messages_owners.keys():
+                                self.drexel_messages_owners[memberid].append(message.content)
+                            else:
+                                self.drexel_messages_owners[memberid] = [message.content]
 
-                        if channelid in self.drexel_messages_channel.keys():
-                            self.drexel_messages_channel[channelid][message.content] = memberid
-                        else:
-                            self.drexel_messages_channel[channelid] = {message.content: memberid}                
-                        
-                        self.drexel_messages_all[message.content] = memberid
-                        
-                        print(f"message {i} added")
+                            if channelid in self.drexel_messages_channel.keys():
+                                self.drexel_messages_channel[channelid][message.content] = memberid
+                            else:
+                                self.drexel_messages_channel[channelid] = {message.content: memberid}                
+                            
+                            self.drexel_messages_all[message.content] = memberid
+                            
+                            print(f"message {i} added")
 
             print("messages scraped")
             with open(DREXEL_OWNERS_PATH, 'w') as file:
@@ -281,34 +282,42 @@ class Queries(commands.Cog):
     @commands.check(is_owner)
     async def updateuw(self, ctx: commands.Context):
         
-        guild: discord.Guild            = self.bot.get_guild(UW_GUILD_ID)
-        timestart                       = time.time()
-        drexelLastDT: datetime.datetime = datetime.datetime.fromtimestamp(self.uw_last_update)
+        print("updateuw called")
+
+        guild: discord.Guild        = self.bot.get_guild(UW_GUILD_ID)
+        timestart                   = time.time()
+        uwLastDT: datetime.datetime = datetime.datetime.fromtimestamp(self.uw_last_update)
 
         async with ctx.typing():
             i = 0
             for channel in guild.channels:
-                if channel.name not in UW_IGNORED_CHANNELS:
-                    async for message in channel.history(after=drexelLastDT):
-                        i += 1
+                if channel.name not in UW_IGNORED_CHANNELS and isinstance(channel, discord.TextChannel):
+                    print(f"valid channel {channel.name}")
+                    async for message in channel.history(after=uwLastDT):
+                        print(message.content)
 
-                        member      = message.author
-                        memberid    = str(member.id)
-                        channelid   = str(message.channel.id)
-                        
-                        if memberid in self.uw_messages_owners.keys():
-                            self.uw_messages_owners[memberid].append(message.content)
-                        else:
-                            self.uw_messages_owners[memberid] = [message.content]
+                        if len(message.content) > 0:
+                            i += 1
 
-                        if channelid in self.uw_messages_channel.keys():
-                            self.uw_messages_channel[channelid][message.content] = memberid
-                        else:
-                            self.uw_messages_channel[channelid] = {message.content: memberid}                
-                        
-                        self.uw_messages_all[message.content] = memberid
-                        
-                        print(f"message {i} added")
+                            print(message.content)
+
+                            member      = message.author
+                            memberid    = str(member.id)
+                            channelid   = str(message.channel.id)
+                            
+                            if memberid in self.uw_messages_owners.keys():
+                                self.uw_messages_owners[memberid].append(message.content)
+                            else:
+                                self.uw_messages_owners[memberid] = [message.content]
+
+                            if channelid in self.uw_messages_channel.keys():
+                                self.uw_messages_channel[channelid][message.content] = memberid
+                            else:
+                                self.uw_messages_channel[channelid] = {message.content: memberid}                
+                            
+                            self.uw_messages_all[message.content] = memberid
+                            
+                            print(f"message {i} added")
 
             print("messages scraped")
             with open(UW_OWNERS_PATH, 'w') as file:
