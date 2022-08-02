@@ -35,7 +35,8 @@ DREXEL_APPROVED_CHANNELS    = [ 'general',
 """
 
 UW_IGNORED_CHANNELS         = [ 'groovy-graveyard',
-                                'schkloom-squad2therevival' ]
+                                'schkloom-squad2therevival',
+                                'askuw' ]
 
 script_path             = os.path.normpath(__file__)
 script_dir              = os.path.split(script_path)[0]
@@ -57,10 +58,12 @@ UW_CHANNEL_PATH         = os.path.join(script_dir, 'uw_messages_channels.json')
 UW_TIME_PATH            = os.path.join(script_dir, 'last_uw_update.json')
 
 HELP = """
+**This bot now supports slash commands!**
+
 `_help`:
 *Shows this message.*
 
-`_rename @[user] [new name]`:
+`_rename [user] [new name]`:
 *Allows a user to rename their friends using the power of community.*
 
 `_setvoterequirements [integer]`:

@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord import app_commands
 from helper import *
 from config import *
 import time
@@ -13,9 +14,7 @@ import discord
 class Queries(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
-        self.bot                        = bot
-        self.henry_messages             = []    # messages henry has sent
-        self.henry_time                 = 0.0   # last time since henry was updated
+        self.bot                                = bot
 
         # load and save json of guild preferences, including vote pass/fail requirements
         self.henry_messages, self.henry_time    = load_henry_from_file(HENRY_PATH)
@@ -23,12 +22,12 @@ class Queries(commands.Cog):
         self.drexel_messages_all                = readjsondict(DREXEL_ALL_PATH)
         self.drexel_messages_owners             = readjsondict(DREXEL_OWNERS_PATH)
         self.drexel_messages_channel            = readjsondict(DREXEL_CHANNEL_PATH)
-        self.drexel_last_update = float(readjsondict(DREXEL_TIME_PATH)['time updated']) if readjsondict(DREXEL_TIME_PATH) else 0.0
+        self.drexel_last_update                 = float(readjsondict(DREXEL_TIME_PATH)['time updated']) if readjsondict(DREXEL_TIME_PATH) else 0.0
 
         self.uw_messages_all                    = readjsondict(UW_ALL_PATH)
         self.uw_messages_owners                 = readjsondict(UW_OWNERS_PATH)
         self.uw_messages_channel                = readjsondict(UW_CHANNEL_PATH)
-        self.uw_last_update = float(readjsondict(UW_TIME_PATH)['time updated']) if readjsondict(UW_TIME_PATH) else 0.0
+        self.uw_last_update                     = float(readjsondict(UW_TIME_PATH)['time updated']) if readjsondict(UW_TIME_PATH) else 0.0
 
 
     @commands.command()
@@ -340,8 +339,8 @@ class Queries(commands.Cog):
             await ctx.send(embed=str_to_embed(f"UW has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} new messages."))
 
 
-    @commands.command()
-    async def askhenry(self, ctx: commands.Context, *args):
+    @commands.hybrid_command(description="Ask henry a question")
+    async def askhenry(self, ctx: commands.Context, question: typing.Optional[str]):
 
         print("askhenry called")
 
@@ -360,7 +359,7 @@ class Queries(commands.Cog):
                 await ctx.send(embed=str_to_embed("There are no saved messages from henry."))
 
 
-    @commands.command()
+    @commands.hybrid_command(description="Ask drexel a question")
     async def askdrexel(self, ctx: commands.Context, member: typing.Optional[discord.Member] = None, channel: typing.Optional[discord.TextChannel] = None):
 
         print("askdrexel called")
@@ -402,12 +401,16 @@ class Queries(commands.Cog):
 
         await ctx.send(embed=message)
 
-    @commands.command()
-    async def askuw(self, ctx: commands.Context, member: typing.Optional[discord.Member] = None, channel: typing.Optional[discord.TextChannel] = None):
+    @commands.hybrid_command(description="Ask UW a question")
+    async def askuw(self, ctx: commands.Context, user: typing.Optional[discord.User] = None, channel: typing.Optional[discord.TextChannel] = None):
 
         print("askuw called")
+        print(f"user: {user}")
         name    = ""
         message = ""
+        member  = self.bot.get_guild(UW_GUILD_ID).get_member(user.id) if user else None
+        print(f"member: {member}")
+
         if member:
             print("member found")
 

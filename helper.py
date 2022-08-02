@@ -55,7 +55,7 @@ def load_henry_from_file(path):
             dt = json.load(file)
             dt = float(dt['time updated'])
     except:
-        dt = None
+        dt = 0.0
     
     return henrylist, dt
 

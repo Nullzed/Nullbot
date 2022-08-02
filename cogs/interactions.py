@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord import app_commands
 from config import *
 from helper import *
 import json
@@ -36,19 +37,19 @@ class Interactions(commands.Cog):
 
     
     # Sets how many votes the bot should look for before closing a vote.
-    @commands.command()
-    async def setvoterequirements(self, ctx: commands.Context, arg: int):
+    @commands.hybrid_command(description="Change vote requirements")
+    async def setvoterequirements(self, ctx: commands.Context, votes: int):
 
         if ctx.author.guild_permissions.manage_guild == True:
             # set server vote pass/fail requirement numbers.
             with open(SERVER_SETTINGS_PATH, 'w') as file:
                 # if arg < 1: arg = 1
 
-                self.server_settings[str(ctx.guild.id)]['Vote Requirements'] = arg
+                self.server_settings[str(ctx.guild.id)]['Vote Requirements'] = votes
 
                 json.dump(self.server_settings, file, indent = 4)
 
-            await ctx.send(embed = str_to_embed(f"Server vote requirements updated to a majority by {arg} votes."))
+            await ctx.send(embed = str_to_embed(f"Server vote requirements updated to a majority by {votes} votes."))
         else:
             await ctx.send(embed = str_to_embed("Invalid permissions. You must have manage server permissions to use this command."))
 
@@ -65,13 +66,25 @@ class Interactions(commands.Cog):
         await message.add_reaction('👍')
         await message.add_reaction('👎')
 
+
+    @app_commands.command(description="Rename another user")
+    async def rename(self, interaction: discord.Interaction, member: discord.Member, name: str):
+
+        await interaction.response.send_message(embed = str_to_embed(f"Rename {member.mention} to `{name}`?"))
+        message: discord.Message        = await interaction.original_message()
+        self.id_user_dict[message.id]   = [member, name, interaction.user]
+        self.waiting_message_cache.append(message.id)    
+
+        await message.add_reaction('👍')
+        await message.add_reaction('👎')
+
     
-    @commands.command()
+    @commands.hybrid_command(description="Show vote requirements")
     async def showvoterequirements(self, ctx: commands.Context):
 
         votereqs = self.server_settings[str(ctx.guild.id)]['Vote Requirements']
 
-        await ctx.send(embed = str_to_embed(str(votereqs)))
+        await ctx.send(embed = str_to_embed(f"Server requires a majority by {votereqs} votes."))
 
 
     @commands.command()

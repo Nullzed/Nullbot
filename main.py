@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 from helper import *
 from config import *
 import time
@@ -20,8 +21,15 @@ async def close(ctx: commands.Context):
         await bot.close()
 
 
-# help command
 @bot.command()
+@commands.check(is_owner)
+async def sync(ctx: commands.Context):
+    await bot.tree.sync()
+    await ctx.send(embed=str_to_embed(f"Synced slash commands on <t:{int(time.time())}>"))
+
+
+# help command
+@bot.hybrid_command(description="List all commands")
 async def help(ctx: commands.Context):
     print("help called")
 
@@ -57,6 +65,8 @@ async def on_ready():
 
     # load and save json of guild preferences, including vote pass/fail requirements
 
+    await bot.tree.sync()
+
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for _help"))
     await testchannel.send(embed = str_to_embed(f"Nullbot has fully initialized on <t:{int(time.time())}>"))
 
@@ -67,6 +77,15 @@ async def reload(ctx: commands.Context, arg: str):
     try: 
         await bot.reload_extension(f"cogs.{arg}")
         await ctx.send(embed=str_to_embed(f"Successfully reloaded extension `{arg}` on <t:{int(time.time())}>"))
+    except Exception as e: await ctx.send(embed=str_to_embed(f"{e}"))
+
+
+@bot.command()
+@commands.check(is_owner)
+async def load(ctx: commands.Context, arg: str):
+    try: 
+        await bot.load_extension(f"cogs.{arg}")
+        await ctx.send(embed=str_to_embed(f"Successfully loaded extension `{arg}` on <t:{int(time.time())}>"))
     except Exception as e: await ctx.send(embed=str_to_embed(f"{e}"))
 
 
