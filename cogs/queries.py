@@ -14,19 +14,21 @@ class Queries(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot                        = bot
-        self.henry_messages             = [] # messages henry has sent
-        self.henry_time                 = 0.0 # last time since henry was updated
-        self.drexel_messages_all        = {} # all the drexel messages
-        self.drexel_messages_owners     = {} # all the drexel messages sorted by owner
-        self.drexel_messages_channel    = {} # all the drexel messages sorted by channel
-        self.drexel_last_update         = 0.0 #last time since drexel was updated
+        self.henry_messages             = []    # messages henry has sent
+        self.henry_time                 = 0.0   # last time since henry was updated
 
         # load and save json of guild preferences, including vote pass/fail requirements
         self.henry_messages, self.henry_time    = load_henry_from_file(HENRY_PATH)
+
         self.drexel_messages_all                = readjsondict(DREXEL_ALL_PATH)
         self.drexel_messages_owners             = readjsondict(DREXEL_OWNERS_PATH)
         self.drexel_messages_channel            = readjsondict(DREXEL_CHANNEL_PATH)
-        if readjsondict(DREXEL_TIME_PATH): self.drexel_last_update = float(readjsondict(DREXEL_TIME_PATH)['time updated'])
+        self.drexel_last_update = float(readjsondict(DREXEL_TIME_PATH)['time updated']) if readjsondict(DREXEL_TIME_PATH) else 0.0
+
+        self.uw_messages_all                    = readjsondict(UW_ALL_PATH)
+        self.uw_messages_owners                 = readjsondict(UW_OWNERS_PATH)
+        self.uw_messages_channel                = readjsondict(UW_CHANNEL_PATH)
+        self.uw_last_update = float(readjsondict(UW_TIME_PATH)['time updated']) if readjsondict(UW_TIME_PATH) else 0.0
 
 
     @commands.command()
@@ -117,9 +119,9 @@ class Queries(commands.Cog):
                 json.dump(self.drexel_messages_channel, file, indent=4)
             print("messages saved")
 
-            curtime = time.time()
+            self.drexel_last_update = time.time()
             with open(DREXEL_TIME_PATH, 'w') as file:
-                json.dump({'time updated': curtime}, file)
+                json.dump({'time updated': self.drexel_last_update}, file)
             print("time saved")
 
             timeend    = time.time()
@@ -127,6 +129,65 @@ class Queries(commands.Cog):
             timedeltam = timedeltas // 60
             
             await ctx.send(embed=str_to_embed(f"Drexel has been updated, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} messages."))
+
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def fullupdateuw(self, ctx: commands.Context, arg: int):
+
+        print("fullupdateuw called")
+
+        self.uw_messages_owners = {}
+        self.uw_messages_all    = {}
+        guild: discord.Guild    = self.bot.get_guild(UW_GUILD_ID)
+        timestart               = time.time()
+
+        async with ctx.typing():
+            i = 0
+
+            for channel in guild.text_channels:
+                if channel.name not in UW_IGNORED_CHANNELS:
+                    async for message in channel.history(limit=arg):
+                        if len(message.content) > 0:
+                            i += 1
+
+                            member      = message.author
+                            memberid    = str(member.id)
+                            channelid   = str(message.channel.id)
+                            
+                            if memberid in self.uw_messages_owners.keys():
+                                self.uw_messages_owners[memberid].append(message.content)
+                            else:
+                                self.uw_messages_owners[memberid] = [message.content]
+
+                            if channelid in self.uw_messages_channel.keys():
+                                self.uw_messages_channel[channelid][message.content] = memberid
+                            else:
+                                self.uw_messages_channel[channelid] = {message.content: memberid}
+                            
+                            self.uw_messages_all[message.content] = memberid
+                            
+                            print(f"message {i} added")
+
+            print("messages scraped")
+            with open(UW_OWNERS_PATH, 'w') as file:
+                json.dump(self.uw_messages_owners, file, indent=4)
+            with open(UW_ALL_PATH, 'w') as file:
+                json.dump(self.uw_messages_all, file, indent=4)
+            with open(UW_CHANNEL_PATH, 'w') as file:
+                json.dump(self.uw_messages_channel, file, indent=4)
+            print("messages saved")
+
+            self.uw_last_update = time.time()
+            with open(UW_TIME_PATH, 'w') as file:
+                json.dump({'time updated': self.uw_last_update}, file)
+            print("time saved")
+
+            timeend    = time.time()
+            timedeltas = timeend - timestart
+            timedeltam = timedeltas // 60
+            
+            await ctx.send(embed=str_to_embed(f"UW has been updated, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} messages."))
 
 
     @commands.command()
@@ -204,9 +265,9 @@ class Queries(commands.Cog):
                 json.dump(self.drexel_messages_channel, file, indent=4)
             print("messages saved")
 
-            curtime = time.time()
+            self.drexel_last_update = time.time()
             with open(DREXEL_TIME_PATH, 'w') as file:
-                json.dump({'time updated': curtime}, file)
+                json.dump({'time updated': self.drexel_last_update}, file)
             print("time saved")
 
             timeend    = time.time()
@@ -214,6 +275,60 @@ class Queries(commands.Cog):
             timedeltam = timedeltas / 60
             
             await ctx.send(embed=str_to_embed(f"Drexel has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} new messages."))
+
+
+    @commands.command()
+    @commands.check(is_owner)
+    async def updateuw(self, ctx: commands.Context):
+        
+        guild: discord.Guild            = self.bot.get_guild(UW_GUILD_ID)
+        timestart                       = time.time()
+        drexelLastDT: datetime.datetime = datetime.datetime.fromtimestamp(self.uw_last_update)
+
+        async with ctx.typing():
+            i = 0
+            for channel in guild.channels:
+                if channel.name not in UW_IGNORED_CHANNELS:
+                    async for message in channel.history(after=drexelLastDT):
+                        i += 1
+
+                        member      = message.author
+                        memberid    = str(member.id)
+                        channelid   = str(message.channel.id)
+                        
+                        if memberid in self.uw_messages_owners.keys():
+                            self.uw_messages_owners[memberid].append(message.content)
+                        else:
+                            self.uw_messages_owners[memberid] = [message.content]
+
+                        if channelid in self.uw_messages_channel.keys():
+                            self.uw_messages_channel[channelid][message.content] = memberid
+                        else:
+                            self.uw_messages_channel[channelid] = {message.content: memberid}                
+                        
+                        self.uw_messages_all[message.content] = memberid
+                        
+                        print(f"message {i} added")
+
+            print("messages scraped")
+            with open(UW_OWNERS_PATH, 'w') as file:
+                json.dump(self.uw_messages_owners, file, indent=4)
+            with open(UW_ALL_PATH, 'w') as file:
+                json.dump(self.uw_messages_all, file, indent=4)
+            with open(UW_CHANNEL_PATH, 'w') as file:
+                json.dump(self.uw_messages_channel, file, indent=4)
+            print("messages saved")
+
+            self.uw_last_update = time.time()
+            with open(UW_TIME_PATH, 'w') as file:
+                json.dump({'time updated': self.uw_last_update}, file)
+            print("time saved")
+
+            timeend    = time.time()
+            timedeltas = timeend - timestart
+            timedeltam = timedeltas / 60
+            
+            await ctx.send(embed=str_to_embed(f"UW has been updated since the last timestamp, which took about {int(timedeltas)} seconds or {int(timedeltam)}:{int(timedeltas - (timedeltam * 60))} minutes, and loaded {i} new messages."))
 
 
     @commands.command()
@@ -267,6 +382,48 @@ class Queries(commands.Cog):
 
             message                 = random.choice(list(self.drexel_messages_all.keys()))
             member: discord.Member  = self.bot.get_guild(DREXEL_GUILD_ID).get_member(int(self.drexel_messages_all[message]))
+            
+            print(message)
+            print(member.nick)
+
+            name = f"{member.nick} says:"
+
+        message = discord.Embed(description=message)
+        message.set_author(name=name, icon_url=member.avatar.url)
+
+        await ctx.send(embed=message)
+
+    @commands.command()
+    async def askuw(self, ctx: commands.Context, member: typing.Optional[discord.Member] = None, channel: typing.Optional[discord.TextChannel] = None):
+
+        print("askuw called")
+        name    = ""
+        message = ""
+        if member:
+            print("member found")
+
+            id              = str(member.id)
+            memberMessages  = self.uw_messages_owners[id]
+            message         = random.choice(memberMessages)
+
+            name = f"{member.nick} says:"
+        elif channel:
+            print("channel found")
+
+            id                      = str(channel.id)
+            channelMessages: dict   = self.uw_messages_channel[id]
+            message                 = random.choice(list(channelMessages.keys()))
+            member: discord.Member  = ctx.guild.get_member(int(self.uw_messages_channel[id][message]))
+
+            print(channel)
+            print(message)
+
+            name = f"{member.nick} in #{channel.name} says:"
+        else:
+            print("member or channel not found")
+
+            message                 = random.choice(list(self.uw_messages_all.keys()))
+            member: discord.Member  = self.bot.get_guild(UW_GUILD_ID).get_member(int(self.uw_messages_all[message]))
             
             print(message)
             print(member.nick)

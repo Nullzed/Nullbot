@@ -9,7 +9,7 @@ class Interactions(commands.Cog):
         self.bot                    = bot
         self.waiting_message_cache  = [] # voting messages being waited on
         self.id_user_dict           = {} # rename voting messages
-        self.server_settings        = {} # voting settings for each server
+        self.defaultVR              = 3
 
         self.server_settings        = readjsondict(SERVER_SETTINGS_PATH)
         with open(SERVER_SETTINGS_PATH, 'w', encoding='utf-8') as file:
@@ -19,9 +19,20 @@ class Interactions(commands.Cog):
                 id = str(guild.id)
 
                 if id not in self.server_settings.keys():
-                    self.server_settings[id] = {'Vote Requirements': 3}
+                    self.server_settings[id] = {'Vote Requirements': self.defaultVR}
 
             json.dump(self.server_settings, file, indent = 4)
+
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        with open(SERVER_SETTINGS_PATH, 'w', encoding='utf-8') as file:
+            id = str(guild.id)
+
+            if id not in self.server_settings.keys():
+                self.server_settings[id] = {'Vote Requirements': self.defaultVR}
+
+            json.dump(self.server_settings, file, indent=4)
 
     
     # Sets how many votes the bot should look for before closing a vote.

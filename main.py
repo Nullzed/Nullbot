@@ -67,7 +67,7 @@ async def reload(ctx: commands.Context, arg: str):
     try: 
         await bot.reload_extension(f"cogs.{arg}")
         await ctx.send(embed=str_to_embed(f"Successfully reloaded extension `{arg}` on <t:{int(time.time())}>"))
-    except Exception as e: await ctx.send(embed=str_to_embed(f"{e} error has occured."))
+    except Exception as e: await ctx.send(embed=str_to_embed(f"{e}"))
 
 
 @bot.listen()
