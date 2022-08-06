@@ -328,7 +328,10 @@ class Queries(commands.Cog):
             name = f"{member.nick} says:"
 
         message = discord.Embed(description=message)
-        message.set_author(name=name, icon_url=member.avatar.url)
+        if member.display_avatar:
+            message.set_author(name=name, icon_url=member.display_avatar.url)
+        else:
+            message.set_author(name=name, icon_url=member.default_avatar.url)
 
         return message
         
