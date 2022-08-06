@@ -1,4 +1,5 @@
 import discord
+from discord.ext import commands
 import json
 import config
 
@@ -70,5 +71,11 @@ def remove_nullbot(members: list[discord.Member]) -> list[discord.Member]:
     return members
 
 
-def is_owner(ctx):
+def is_owner(ctx: commands.Context):
     return ctx.author.id == config.NEIL_ID
+
+def app_is_owner(interaction: discord.Interaction):
+    return interaction.user.id == config.NEIL_ID
+
+def is_manager(ctx: commands.Context):
+    return ctx.author.guild_permissions.manage_guild

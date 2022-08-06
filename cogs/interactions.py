@@ -19,7 +19,7 @@ class Interactions(commands.Cog):
             for guild in botguilds:
                 id = str(guild.id)
 
-                if id not in self.server_settings.keys():
+                if id not in list(self.server_settings.keys()):
                     self.server_settings[id] = {'Vote Requirements': self.defaultVR}
 
             json.dump(self.server_settings, file, indent = 4)
@@ -40,16 +40,14 @@ class Interactions(commands.Cog):
     @commands.hybrid_command(description="Change vote requirements")
     async def setvoterequirements(self, ctx: commands.Context, votes: int):
 
-        if ctx.author.guild_permissions.manage_guild == True:
+        if ctx.author.guild_permissions.manage_guild:
             # set server vote pass/fail requirement numbers.
             with open(SERVER_SETTINGS_PATH, 'w') as file:
-                # if arg < 1: arg = 1
-
                 self.server_settings[str(ctx.guild.id)]['Vote Requirements'] = votes
 
                 json.dump(self.server_settings, file, indent = 4)
 
-            await ctx.send(embed = str_to_embed(f"Server vote requirements updated to a majority by {votes} votes."))
+            await ctx.send(embed = str_to_embed(f"Server vote requirements updated to a majority by **{votes}** votes."))
         else:
             await ctx.send(embed = str_to_embed("Invalid permissions. You must have manage server permissions to use this command."))
 
@@ -139,7 +137,7 @@ class Interactions(commands.Cog):
                         oldName = member.display_name
                         await member.edit(nick = newName)
 
-                        newemb = discord.Embed(description = f"`{oldName}`'s name change to {member.mention} **APPROVED** by {users}.", color = DEF_COLOR)
+                        newemb = discord.Embed(description = f"`{oldName}`'s name change to {member.mention} **APPROVED** by {users}.")
                         newemb.set_author(icon_url = str(requester.avatar.url), name = f"Requested by {requester.display_name}")
 
                         await channel.send(embed = newemb)
@@ -163,7 +161,7 @@ class Interactions(commands.Cog):
                 await message.delete()
 
                 async with channel.typing():
-                    newemb = discord.Embed(description = f"{member.mention}'s name change to `{newName}` **REJECTED** by {users}.", color = DEF_COLOR)
+                    newemb = discord.Embed(description = f"{member.mention}'s name change to `{newName}` **REJECTED** by {users}.")
                     newemb.set_author(icon_url = str(requester.avatar.url), name = f"Requested by {requester.display_name}")
 
                     await channel.send(embed = newemb)

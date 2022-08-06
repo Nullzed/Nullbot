@@ -1,10 +1,15 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 from helper import *
 from config import *
 import time
+import logging
 
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 bot = commands.Bot(command_prefix='_', help_command=None, intents=discord.Intents.all())
 
@@ -25,6 +30,7 @@ async def close(ctx: commands.Context):
 @commands.check(is_owner)
 async def sync(ctx: commands.Context):
     await bot.tree.sync()
+    await bot.tree.sync(guild=bot.get_guild(TEST_GUILD_ID))
     await ctx.send(embed=str_to_embed(f"Synced slash commands on <t:{int(time.time())}>"))
 
 
@@ -33,7 +39,7 @@ async def sync(ctx: commands.Context):
 async def help(ctx: commands.Context):
     print("help called")
 
-    mesEmb = discord.Embed(description=HELP, color = DEF_COLOR)
+    mesEmb = discord.Embed(description=HELP)
     mesEmb.set_author(icon_url = str(bot.user.avatar.url), name = "Nullbot commands overview")
 
     await ctx.send(embed = mesEmb)
@@ -53,19 +59,33 @@ async def adminhelp(ctx: commands.Context):
 async def on_ready():
     testchannel = bot.get_guild(TEST_GUILD_ID).get_channel(TEST_CHANNEL_ID)
 
+    # load queries cog
     try: 
         await bot.load_extension('cogs.queries')
         await testchannel.send(embed = str_to_embed(f"Nullbot has initialized queries cog on <t:{int(time.time())}>"))
-    except Exception as e: await testchannel.send(embed=str_to_embed(f"{e} error has occured."))
+    except Exception as e: 
+        logger.error(e, exc_info=True)
+        await testchannel.send(embed=str_to_embed(f"{e} error has occured."))
 
+    # load interactions cog
     try:
         await bot.load_extension('cogs.interactions')
-        await bot.get_guild(TEST_GUILD_ID).get_channel(TEST_CHANNEL_ID).send(embed = str_to_embed(f"Nullbot has initialized interactions cog on <t:{int(time.time())}>"))
+        await testchannel.send(embed = str_to_embed(f"Nullbot has initialized interactions cog on <t:{int(time.time())}>"))
+    except Exception as e: 
+        logger.error(e, exc_info=True)
+        await testchannel.send(embed=str_to_embed(f"{e} error has occured."))
+
+    """ # load casino cog
+    try:
+        await bot.load_extension('cogs.casino')
+        await testchannel.send(embed = str_to_embed(f"Nullbot has initialized casino cog on <t:{int(time.time())}>"))
     except Exception as e: await testchannel.send(embed=str_to_embed(f"{e} error has occured."))
+    """
 
     # load and save json of guild preferences, including vote pass/fail requirements
 
     await bot.tree.sync()
+    await bot.tree.sync(guild=bot.get_guild(TEST_GUILD_ID))
 
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for _help"))
     await testchannel.send(embed = str_to_embed(f"Nullbot has fully initialized on <t:{int(time.time())}>"))
@@ -77,7 +97,9 @@ async def reload(ctx: commands.Context, arg: str):
     try: 
         await bot.reload_extension(f"cogs.{arg}")
         await ctx.send(embed=str_to_embed(f"Successfully reloaded extension `{arg}` on <t:{int(time.time())}>"))
-    except Exception as e: await ctx.send(embed=str_to_embed(f"{e}"))
+    except Exception as e: 
+        logger.error(e, exc_info=True)
+        await ctx.send(embed=str_to_embed(f"{e}"))
 
 
 @bot.command()
@@ -86,6 +108,17 @@ async def load(ctx: commands.Context, arg: str):
     try: 
         await bot.load_extension(f"cogs.{arg}")
         await ctx.send(embed=str_to_embed(f"Successfully loaded extension `{arg}` on <t:{int(time.time())}>"))
+    except Exception as e: 
+        logger.error(e, exc_info=True)
+        await ctx.send(embed=str_to_embed(f"{e}"))
+
+
+@bot.command()
+@commands.check(is_owner)
+async def unload(ctx: commands.Context, arg: str):
+    try: 
+        await bot.unload_extension(f"cogs.{arg}")
+        await ctx.send(embed=str_to_embed(f"Successfully unloaded extension `{arg}` on <t:{int(time.time())}>"))
     except Exception as e: await ctx.send(embed=str_to_embed(f"{e}"))
 
 
