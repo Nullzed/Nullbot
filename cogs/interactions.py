@@ -9,7 +9,7 @@ class Interactions(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot                    = bot
         self.waiting_message_cache  = [] # voting messages being waited on
-        self.id_user_dict           = {} # rename voting messages
+        self.id_user_dict           = {} # voting message data (such as names)
         self.defaultVR              = 3
 
         self.server_settings        = readjsondict(SERVER_SETTINGS_PATH)
