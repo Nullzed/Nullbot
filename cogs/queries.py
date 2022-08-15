@@ -1,4 +1,3 @@
-from urllib import response
 from discord.ext import commands
 from discord import app_commands
 from helper import *
@@ -10,6 +9,13 @@ import typing
 import datetime
 import json
 import discord
+import logging
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 
 class Queries(commands.Cog):
@@ -34,19 +40,16 @@ class Queries(commands.Cog):
 
         print("Loaded guilds")
         self.guild_ignored_channels = {"956714146223775817": DREXEL_IGNORED_CHANNELS, "355717114197180417": UW_IGNORED_CHANNELS}  
-        self.guild_messages_all     = {}
-        self.guild_messages_owners  = {}
-        self.guild_messages_channel = {}
-        self.guild_messages_pinned  = {}
-        self.guild_last_update      = {}
+        self.guild_messages_all, self.guild_messages_owners, self.guild_messages_channel, self.guild_messages_pinned, self.guild_last_update = ({}, {}, {}, {}, {})
 
         for guild in self.bot.guilds:
             guild_data_path = os.path.join(DATA_DIR, f'{guild.id}')
             os.makedirs(guild_data_path, exist_ok=True)
 
         for guildid in self.guilds.keys():
-            guild_data_path                         = os.path.join(DATA_DIR, f'{guildid}')
+            guild_data_path = os.path.join(DATA_DIR, f'{guildid}')
             os.makedirs(guild_data_path, exist_ok=True)
+
             self.guild_messages_all[guildid]        = readjsondict(os.path.join(guild_data_path, f'{guildid}_messages_all.json'))
             self.guild_messages_owners[guildid]     = readjsondict(os.path.join(guild_data_path, f'{guildid}_messages_owners.json'))
             self.guild_messages_channel[guildid]    = readjsondict(os.path.join(guild_data_path, f'{guildid}_messages_channel.json'))
@@ -81,20 +84,17 @@ class Queries(commands.Cog):
     @app_commands.command(description="Update a guild")
     @app_commands.guilds(int(TEST_GUILD_ID))
     async def updateguild(self, interaction: discord.Interaction, guildid: str, limit: typing.Optional[int] = 50000, fromts: typing.Optional[bool] = False):
-        if not fromts:
-            self.guild_messages_all[guildid]        = {}
-            self.guild_messages_owners[guildid]     = {}
-            self.guild_messages_channel[guildid]    = {}
-            self.guild_messages_pinned[guildid]     = {}
+        if not fromts: 
+                self.guild_messages_all[guildid], self.guild_messages_owners[guildid], self.guild_messages_channel[guildid], self.guild_messages_pinned[guildid] = ({}, {}, {}, {})
         
-        guild: discord.Guild        = self.bot.get_guild(int(guildid))
-        loadingemoji                = None
-        loadingemoji                = self.bot.get_emoji(1005354899351015464)
+        guild, loadingemoji = (self.bot.get_guild(int(guildid)), self.bot.get_emoji(1005354899351015464))
         await interaction.response.send_message(embed=str_to_embed(f"{loadingemoji} Scraping messages from `{guild.name}`..."))
-        responsemessage             = await interaction.original_message()
-        responsemessageid           = responsemessage.id
-        responsechannelid           = interaction.channel_id
-        responseguildid             = interaction.guild_id
+
+        responsemessage     = await interaction.original_message()
+        responsemessageid   = responsemessage.id 
+        responsechannelid   = interaction.channel_id 
+        responseguildid     = interaction.guild_id
+
         timestart                   = time.time()
         ts                          = datetime.datetime.fromtimestamp(self.guild_last_update[guildid]) if fromts else None
         ignored_channels: list[str] = self.guild_ignored_channels[guildid] if guildid in self.guild_ignored_channels.keys() else []
@@ -134,7 +134,7 @@ class Queries(commands.Cog):
         
         responsemessage = await self.bot.get_guild(responseguildid).get_channel(responsechannelid).fetch_message(responsemessageid)
 
-        await responsemessage.edit(embed=str_to_embed(f"{guild.name} has been updated, which took about {int(timedeltas)} seconds or {int(timedeltam)} minutes and {int(timedeltas - (timedeltam * 60))} seconds, and loaded {i} messages."))
+        await responsemessage.edit(embed=discord.Embed(description=f"<:white_check_mark:1008679684642455582> `{guild.name}` has been updated, which took about {int(timedeltam)} minutes and {int(timedeltas - (timedeltam * 60))} seconds, and loaded {i} messages.", color=0x39ff14))
 
 
     @commands.command()
@@ -234,7 +234,8 @@ class Queries(commands.Cog):
     @commands.hybrid_command(description="Ask drexel a question")
     async def askdrexel(self, ctx: commands.Context, user: typing.Optional[discord.User] = None, channel: typing.Optional[discord.TextChannel] = None, pinned: typing.Optional[bool] = False, *, question: typing.Optional[str] = None):
 
-        print("askdrexel called")
+        logger.info("askdrexel called")
+        
         print(f"user: {user}")
         guild: discord.Guild    = self.bot.get_guild(DREXEL_GUILD_ID)
         member                  = guild.get_member(user.id) if user else None
@@ -253,7 +254,8 @@ class Queries(commands.Cog):
     @commands.hybrid_command(description="Ask UW a question")
     async def askuw(self, ctx: commands.Context, user: typing.Optional[discord.User] = None, channel: typing.Optional[discord.TextChannel] = None, pinned: typing.Optional[bool] = False, *, question: typing.Optional[str] = None):
 
-        print("askuw called")
+        logger.info("askuw called")
+
         print(f"user: {user}")
         guild: discord.Guild    = self.bot.get_guild(UW_GUILD_ID)
         member                  = guild.get_member(user.id) if user else None

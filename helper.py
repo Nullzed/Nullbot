@@ -2,6 +2,13 @@ import discord
 from discord.ext import commands
 import json
 import config
+import logging
+
+logger = logging.getLogger('discord')
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 
 def str_to_embed(input: str, incolor = config.DEF_COLOR) -> discord.Embed:
@@ -30,13 +37,13 @@ def readjsondict(path) -> dict:
     try:
         with open(path, 'r') as file: 
                 output = json.load(file)
-                print(f"Successfully loaded {file.name}")
+                logger.info(f"Successfully loaded {file.name}")
                 return output
     except FileNotFoundError:
-        print(f"Unable to load file from {path}, returning blank dictionary.")
+        logger.info(f"Unable to load file from {path}, returning blank dictionary.")
         return {}
     except Exception as e:
-        print(f"Unspecific error {e}, returning blank dictionary.")
+        logger.info(f"Unspecific error {e}, returning blank dictionary.")
         return {}
 
 
@@ -47,7 +54,7 @@ def load_henry_from_file(path):
     try:
         with open(path, 'r') as file:      
                 henrylist = json.load(file)
-                print("loaded henry")          
+                logger.info("loaded henry")          
     except:
         henrylist = []
     
