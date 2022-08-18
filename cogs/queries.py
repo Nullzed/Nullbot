@@ -283,7 +283,8 @@ class Queries(commands.Cog):
             memberMessages  = self.guild_messages_owners[guildid][id]
             message         = random.choice(memberMessages)
 
-            name = f"{member.nick} says:"
+            name = member.nick if member.nick != None else member.name
+            name = f"{name} says:"
         elif channel:
             print("channel found")
 
@@ -301,7 +302,8 @@ class Queries(commands.Cog):
             print(channel)
             print(message)
 
-            name = f"{member.nick} in #{channel.name} says:"
+            name = member.nick if member.nick != None else member.name
+            name = f"{name} in #{channel.name} says:"
         elif pinned:
             print("pinned")
 
@@ -317,7 +319,8 @@ class Queries(commands.Cog):
             print(member)
             print(message)
 
-            name = f"{member.nick} says:"
+            name = member.nick if member.nick != None else member.name
+            name = f"{name} says:"
         else:
             print("member or channel not found")
 
@@ -327,7 +330,8 @@ class Queries(commands.Cog):
             print(message)
             print(member.nick)
 
-            name = f"{member.nick} says:"
+            name = member.nick if member.nick != None else member.name
+            name = f"{name} says:"
 
         message = discord.Embed(description=message)
         if member.display_avatar:
