@@ -88,12 +88,8 @@ class Queries(commands.Cog):
                 self.guild_messages_all[guildid], self.guild_messages_owners[guildid], self.guild_messages_channel[guildid], self.guild_messages_pinned[guildid] = ({}, {}, {}, {})
         
         guild, loadingemoji = (self.bot.get_guild(int(guildid)), self.bot.get_emoji(1005354899351015464))
-        await interaction.response.send_message(embed=str_to_embed(f"{loadingemoji} Scraping messages from `{guild.name}`..."))
-
-        responsemessage     = await interaction.original_message()
-        responsemessageid   = responsemessage.id 
-        responsechannelid   = interaction.channel_id 
-        responseguildid     = interaction.guild_id
+        interactionresponse = interaction.response
+        await interactionresponse.send_message(embed=str_to_embed(f"{loadingemoji} Started scraping messages from `{guild.name}` <t:{int(time.time())}:R>..."))
 
         timestart                   = time.time()
         ts                          = datetime.datetime.fromtimestamp(self.guild_last_update[guildid]) if fromts else None
@@ -131,10 +127,8 @@ class Queries(commands.Cog):
         timeend    = time.time()
         timedeltas = timeend - timestart
         timedeltam = timedeltas // 60
-        
-        responsemessage = await self.bot.get_guild(responseguildid).get_channel(responsechannelid).fetch_message(responsemessageid)
 
-        await responsemessage.edit(embed=discord.Embed(description=f"<:white_check_mark:1008679684642455582> `{guild.name}` has been updated, which took about {int(timedeltam)} minutes and {int(timedeltas - (timedeltam * 60))} seconds, and loaded {i} messages.", color=0x39ff14))
+        await interactionresponse.edit_message(embed=discord.Embed(description=f"<:white_check_mark:1008679684642455582> `{guild.name}` has been updated, which took about {int(timedeltam)} minutes and {int(timedeltas - (timedeltam * 60))} seconds, and loaded {i} messages.", color=0x39ff14))
 
 
     @commands.command()

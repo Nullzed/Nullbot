@@ -3,6 +3,7 @@ from discord import app_commands
 from config import *
 from helper import *
 import json
+import typing
 
 class Interactions(commands.Cog):
 
@@ -54,19 +55,19 @@ class Interactions(commands.Cog):
 
     # renames a user using the power of a voting majority
     @commands.command()
-    async def rename(self, ctx: commands.Context, member: discord.Member, *args):
-
-        name                            = ' '.join(args)
+    async def rename(self, ctx: commands.Context, member: discord.Member, *, args: str):
+        
+        name                            = args
         message: discord.Message        = await ctx.send(embed = str_to_embed(f"Rename {member.mention} to `{name}`?"))
         self.id_user_dict[message.id]   = [member, name, ctx.author]
-        self.waiting_message_cache.append(message.id)    
+        self.waiting_message_cache.append(message.id)
 
         await message.add_reaction('👍')
         await message.add_reaction('👎')
 
 
-    @app_commands.command(description="Rename another user")
-    async def rename(self, interaction: discord.Interaction, member: discord.Member, name: str):
+    @app_commands.command(name='rename', description="Rename another user")
+    async def rename_slash(self, interaction: discord.Interaction, member: discord.Member, name: str):
 
         await interaction.response.send_message(embed = str_to_embed(f"Rename {member.mention} to `{name}`?"))
         message: discord.Message        = await interaction.original_message()

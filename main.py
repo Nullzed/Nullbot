@@ -124,9 +124,9 @@ async def unload(ctx: commands.Context, arg: str):
 
 @bot.listen()
 async def on_command_error(ctx: commands.Context, error):
-    if ctx.command.name     == "rename":
+    if ctx.invoked_with     == "rename":
         await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}rename @[member] [new name]`".format(bot.command_prefix)))
-    elif ctx.command.name   == "setvoterequirements":
+    elif ctx.invoked_with   == "setvoterequirements":
         await ctx.send(embed = str_to_embed("Incorrect usage. Proper usage of the command is `{0}setvoterequirements [integer]`".format(bot.command_prefix)))
 
 
