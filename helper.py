@@ -5,15 +5,9 @@ import config
 import logging
 
 logger = logging.getLogger('discord')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-
 
 def str_to_embed(input: str, incolor = config.DEF_COLOR) -> discord.Embed:
     return discord.Embed(description=input)
-
 
 # makes a string list of users
 def make_user_list(users: list[discord.Member]) -> str:
