@@ -12,11 +12,6 @@ import discord
 import logging
 
 logger = logging.getLogger('discord')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-
 
 class Queries(commands.Cog):
 
@@ -88,8 +83,7 @@ class Queries(commands.Cog):
                 self.guild_messages_all[guildid], self.guild_messages_owners[guildid], self.guild_messages_channel[guildid], self.guild_messages_pinned[guildid] = ({}, {}, {}, {})
         
         guild, loadingemoji = (self.bot.get_guild(int(guildid)), self.bot.get_emoji(1005354899351015464))
-        interactionresponse = interaction.response
-        await interactionresponse.send_message(embed=str_to_embed(f"{loadingemoji} Started scraping messages from `{guild.name}` <t:{int(time.time())}:R>..."))
+        await interaction.response.send_message(embed=str_to_embed(f"{loadingemoji} Started scraping messages from `{guild.name}` <t:{int(time.time())}:R>..."))
 
         timestart                   = time.time()
         ts                          = datetime.datetime.fromtimestamp(self.guild_last_update[guildid]) if fromts else None
@@ -103,32 +97,32 @@ class Queries(commands.Cog):
                         if len(message.content) > 0:
                             i += 1
                             self._add_message(message, guildid)
-                            print(f"message {i} added")
+                            logger.info(f"message {i} added")
                 else:
                     async for message in channel.history(limit=limit):
                         if len(message.content) > 0:
                             i += 1
                             self._add_message(message, guildid)
-                            print(f"message {i} added")
+                            logger.info(f"message {i} added")
 
-        print("messages scraped")
+        logger.info("messages scraped")
         guild_data_path = os.path.join(DATA_DIR, f'{guildid}')
         os.makedirs(guild_data_path, exist_ok=True)
         with open(os.path.join(guild_data_path, f'{guildid}_messages_all.json'), 'w+') as file:      json.dump(self.guild_messages_all[guildid], file, indent=4)
         with open(os.path.join(guild_data_path, f'{guildid}_messages_owners.json'), 'w+') as file:   json.dump(self.guild_messages_owners[guildid], file, indent=4)
         with open(os.path.join(guild_data_path, f'{guildid}_messages_channel.json'), 'w+') as file:  json.dump(self.guild_messages_channel[guildid], file, indent=4)
         with open(os.path.join(guild_data_path, f'{guildid}_messages_pinned.json'), 'w+') as file:   json.dump(self.guild_messages_pinned[guildid], file, indent=4)
-        print("messages saved")
+        logger.info("messages saved")
 
         self.guild_last_update[guildid] = time.time()
         with open(os.path.join(guild_data_path, f'{guildid}_last_update.json'), 'w+') as file:       json.dump(self.guild_last_update[guildid], file)
-        print("time saved")
+        logger.info("time saved")
 
         timeend    = time.time()
         timedeltas = timeend - timestart
         timedeltam = timedeltas // 60
 
-        await interactionresponse.edit_message(embed=discord.Embed(description=f"<:white_check_mark:1008679684642455582> `{guild.name}` has been updated, which took about {int(timedeltam)} minutes and {int(timedeltas - (timedeltam * 60))} seconds, and loaded {i} messages.", color=0x39ff14))
+        await interaction.edit_original_response(embed=discord.Embed(description=f"<:white_check_mark:1008679684642455582> `{guild.name}` has been updated, which took about {int(timedeltam)} minutes and {int(timedeltas - (timedeltam * 60))} seconds, and loaded {i} messages.", color=0x39ff14))
 
 
     @commands.command()
@@ -226,8 +220,12 @@ class Queries(commands.Cog):
 
 
     @commands.hybrid_command(description="Ask drexel a question")
-    async def askdrexel(self, ctx: commands.Context, user: typing.Optional[discord.User] = None, channel: typing.Optional[discord.TextChannel] = None, pinned: typing.Optional[bool] = False, *, question: typing.Optional[str] = None):
-
+    async def askdrexel(self, 
+                        ctx: commands.Context, 
+                        user: typing.Optional[discord.User] = None, 
+                        channel: typing.Optional[discord.TextChannel] = None, 
+                        pinned: typing.Optional[bool] = False, 
+                        *, question: typing.Optional[str] = None):
         logger.info("askdrexel called")
         
         print(f"user: {user}")
@@ -246,7 +244,12 @@ class Queries(commands.Cog):
 
 
     @commands.hybrid_command(description="Ask UW a question")
-    async def askuw(self, ctx: commands.Context, user: typing.Optional[discord.User] = None, channel: typing.Optional[discord.TextChannel] = None, pinned: typing.Optional[bool] = False, *, question: typing.Optional[str] = None):
+    async def askuw(self, 
+                    ctx: commands.Context, 
+                    user: typing.Optional[discord.User] = None, 
+                    channel: typing.Optional[discord.TextChannel] = None, 
+                    pinned: typing.Optional[bool] = False, 
+                    *, question: typing.Optional[str] = None):
 
         logger.info("askuw called")
 
@@ -266,7 +269,12 @@ class Queries(commands.Cog):
         await ctx.send(embed=message)
 
 
-    def _fetch_message(self, member: discord.Member, channel: discord.TextChannel, pinned: bool, guild: discord.Guild, guildid: str) -> discord.Embed:
+    def _fetch_message( self, 
+                        member: discord.Member, 
+                        channel: discord.TextChannel, 
+                        pinned: bool, 
+                        guild: discord.Guild, 
+                        guildid: str) -> discord.Embed:
         name                    = ""
         message                 = ""
 
